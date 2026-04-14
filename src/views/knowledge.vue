@@ -2,7 +2,7 @@
   <div>
     <PageHead title="知识文章">
       <template #buttons>
-        <el-button type="primary">添加</el-button>
+        <el-button @click="dialogVisible = true" type="primary">添加</el-button>
       </template>
     </PageHead>
     <TableSearch :fromItem="fromItem" @search="handleSearch" />
@@ -28,14 +28,20 @@
       <el-table-column prop="publishedAt" label="发布时间"  />
       <el-table-column label="操作" width="240" fixed="right">
         <template #default="scope">
-          <el-button text type="parimary">编辑</el-button>
+          <el-button text type="primary">编辑</el-button>
           <el-button v-if="scope.row.status === 0 ||scope.row.status ===2 " text type="success">发布</el-button>
           <el-button v-if="scope.row.status === 1 " text type="warning">下线</el-button>
           <el-button text type="danger">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
-    <el-pagination style="margin-top: 25px" :page-size="pagination.size" layout="prev, pager, next" :total="pagination.total" @change="handleChange" />
+    <el-pagination 
+    style="margin-top: 25px" 
+    :page-size="pagination.size" 
+    layout="prev, pager, next" 
+    :total="pagination.total" 
+    @change="handleChange" />
+    <ArticleDialog v-model:modelValue="dialogVisible"/>
   </div>
 </template>
 <script setup>
@@ -43,6 +49,7 @@ import PageHead from '@/components/PageHead.vue'
 import TableSearch from '@/components/TableSearch.vue'
 import { categoryTree,articlePage } from '@/api/admin.js'
 import { onMounted ,reactive,ref} from 'vue'
+import ArticleDialog from '@/components/ArticleDialog.vue'
 
 const fromItem = [
   { comp: 'input',   prop: 'title',    label: '文章标题',    placeholder: '请输入文章标题'},
@@ -86,6 +93,9 @@ const categoryMap = reactive({})
 const categoryies = ref([])
 //列表数据
 const tableData = ref([])
+//新增和编辑
+const dialogVisible = ref(false)
+
 onMounted( async () => {
     const data = await categoryTree()
     

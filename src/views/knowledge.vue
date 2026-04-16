@@ -2,7 +2,7 @@
   <div>
     <PageHead title="知识文章">
       <template #buttons>
-        <el-button @click="dialogVisible = true" type="primary">添加</el-button>
+        <el-button @click="handleEdit({})" type="primary">添加</el-button>
       </template>
     </PageHead>
     <TableSearch :fromItem="fromItem" @search="handleSearch" />
@@ -28,7 +28,7 @@
       <el-table-column prop="updatedAt" label="发布时间"  />
       <el-table-column label="操作" width="240" fixed="right">
         <template #default="scope">
-          <el-button text type="primary">编辑</el-button>
+          <el-button @click="handleEdit(scope.row)" text type="primary">编辑</el-button>
           <el-button v-if="scope.row.status === 0 ||scope.row.status ===2 " text type="success">发布</el-button>
           <el-button v-if="scope.row.status === 1 " text type="warning">下线</el-button>
           <el-button text type="danger">删除</el-button>
@@ -41,13 +41,13 @@
     layout="prev, pager, next" 
     :total="pagination.total" 
     @change="handleChange" />
-    <ArticleDialog v-model:modelValue="dialogVisible" :categoryies="categoryies" @success="handleSuccess" />
+    <ArticleDialog v-model:modelValue="dialogVisible" :article="currentArticle" :categoryies="categoryies" @success="handleSuccess" />
   </div>
 </template>
 <script setup>
 import PageHead from '@/components/PageHead.vue'
 import TableSearch from '@/components/TableSearch.vue'
-import { categoryTree,articlePage } from '@/api/admin.js'
+import { categoryTree,articlePage,getArticleDetail } from '@/api/admin.js'
 import { onMounted ,reactive,ref} from 'vue'
 import ArticleDialog from '@/components/ArticleDialog.vue'
 
@@ -95,6 +95,8 @@ const categoryies = ref([])
 const tableData = ref([])
 //新增和编辑
 const dialogVisible = ref(false)
+//编辑表单数据
+const currentArticle = ref(null)
 
 onMounted( async () => {
     const data = await categoryTree()
@@ -106,10 +108,31 @@ onMounted( async () => {
         value: item.id,
       }     
     })
+    
      fromItem[1].options = categoryies.value
      // 【关键】初始化调用一次，让页面加载即有数据
     handleSearch()
 })
 // 新增或编辑成功后，刷新列表
 const handleSuccess = () => {}
+// 编辑文章
+const handleEdit = (row) => {
+   if(!row.id) {
+    //新增文章
+    currentArticle.value = null
+    dialogVisible.value = true
+   }else {
+    //编辑文章
+    getArticleDetail(row.id).then(res => {
+    currentArticle.value = res
+    dialogVisible.value = true
+   })
+   }
+   
+}
+// 发布文章
+const handlePublish = (row) => {
+  // 【关键】必须更新 formData，否则会显示默认值
+  formData = { ...row }
+}
 </script>

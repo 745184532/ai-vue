@@ -1,5 +1,5 @@
 <template>
-    <el-dialog title="文章详情" 
+    <el-dialog :title="isEdit ? '编辑文章' : '新增文章'" 
     v-model="dialogVisible" 
     width="50%" 
     @close="handleClose">
@@ -57,12 +57,12 @@
         <template #footer>
             <el-button v-if="!btnPreview" type="primary" @click="handleSubmit" >{{ btnPreview ? '隐藏预览' : '预览效果' }}</el-button>
             <el-button type="primary" @click="handleClose">取消</el-button>
-            <el-button type="danger" @click="handleSubmit" :loading="loading">创建文章</el-button>
+            <el-button type="primary" @click="handleSubmit" :loading="loading">{{ isEdit ? '更新文章' : '创建文章' }}</el-button>
         </template>
     </el-dialog>
 </template>
 <script setup>
-import { ref,computed,reactive,nextTick } from 'vue'
+import { ref,computed,reactive,nextTick ,watch} from 'vue'
 import { ElMessage } from 'element-plus'
 import { uploadFile ,createArticle } from '@/api/admin.js'
 import { fileBaseUrl } from '@/config/index.js'
@@ -78,7 +78,11 @@ const props = defineProps({
     categoryies: {
         type: Array,
         default: () => []
-    }
+    },
+    article: {
+        type: Object,
+        default: null  //这里定义成null，为了再弹窗里面判断是否是新增还是编辑
+    },
 })
 //由于modelValue，是从父组件传入进来的，正常不能再子组件里面prop直接修改，要解决这个问题，采用在子组件里面再定义计算属性，然后对父组件的状态进行监听，
 //当状态发生变化的时候，再去修改它
@@ -93,13 +97,38 @@ const dialogVisible = computed({
     }
 
 })
-const handleClose = ()=>{}
+const isEdit = computed(() => !!props.article?.id)
+const handleClose = ()=>{
+    //重置formData
+    formRef.value.resetFields()
+    //重置ID
+    businessId.value = null
+    //重置封面图片和数据
+    handleRemove() 
+    //重置标签
+    formData.tagArray = []
+    emit('update:modelValue',false) 
+}
+//监听编辑数据
+watch(()=> props.article, (newVal)=>{
+    if(newVal){
+        nextTick(()=>{
+            //这里原先定义formData得时候是响应式对象，不能整体赋值，会丢失响应式属性
+            Object.assign(formData, newVal)
+            //使用现有ID
+            businessId.value = newVal.id
+            //封面URl
+            imgUrl.value = fileBaseUrl + newVal.coverImage   
+        })
+             
+    }
+}) 
 //表单数据
 const formData = reactive({    
     "title": "",
     "content": "",
     "coverImage": "",
-    "categoryId": 1,
+    "categoryId": null,
     "summary": "",
     "tags": "",
     "id": ""
@@ -138,11 +167,12 @@ const beforeUpload = (file) => {
     }
     return true
 }
+const businessId = ref(null)
 const handleUploadRequest = async ({ file }) => {
     //UUID生成
-    const businessId = crypto.randomUUID()
+    businessId.value = crypto.randomUUID()
     const fileRes = await uploadFile(file,{
-        businessId: businessId
+        businessId: businessId.value
     })
     console.log(fileRes,'上传文件')
     //拼接完整图片地址

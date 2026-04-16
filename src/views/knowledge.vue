@@ -29,9 +29,9 @@
       <el-table-column label="操作" width="240" fixed="right">
         <template #default="scope">
           <el-button @click="handleEdit(scope.row)" text type="primary">编辑</el-button>
-          <el-button v-if="scope.row.status === 0 ||scope.row.status ===2 " text type="success">发布</el-button>
-          <el-button v-if="scope.row.status === 1 " text type="warning">下线</el-button>
-          <el-button text type="danger">删除</el-button>
+          <el-button @click="handlePublish(scope.row)" v-if="scope.row.status === 0 ||scope.row.status ===2 " text type="success">发布</el-button>
+          <el-button @click="handleUnPublish(scope.row)" v-if="scope.row.status === 1 " text type="warning">下线</el-button>
+          <el-button @click="handleDelete(scope.row)" text type="danger">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -47,9 +47,10 @@
 <script setup>
 import PageHead from '@/components/PageHead.vue'
 import TableSearch from '@/components/TableSearch.vue'
-import { categoryTree,articlePage,getArticleDetail } from '@/api/admin.js'
-import { onMounted ,reactive,ref} from 'vue'
 import ArticleDialog from '@/components/ArticleDialog.vue'
+import { categoryTree,articlePage,getArticleDetail,changeArticleStatus,deleteArticle } from '@/api/admin.js'
+import { onMounted ,reactive,ref} from 'vue'
+import{ElMessageBox,ElMessage} from 'element-plus'
 
 const fromItem = [
   { comp: 'input',   prop: 'title',    label: '文章标题',    placeholder: '请输入文章标题'},
@@ -114,7 +115,12 @@ onMounted( async () => {
     handleSearch()
 })
 // 新增或编辑成功后，刷新列表
-const handleSuccess = () => {}
+const handleSuccess = () => {
+  // 关闭弹窗
+  dialogVisible.value = false
+  // 刷新列表
+  handleSearch()
+}
 // 编辑文章
 const handleEdit = (row) => {
    if(!row.id) {
@@ -130,9 +136,50 @@ const handleEdit = (row) => {
    }
    
 }
-// 发布文章
+// 发布文章，引用elbox2次确认
 const handlePublish = (row) => {
-  // 【关键】必须更新 formData，否则会显示默认值
-  formData = { ...row }
+  ElMessageBox.confirm(`确认发布文章${row.title}吗？`, '确认', {
+    confirmButtonText: '确定发布',
+    cancelButtonText: '取消',
+    type: 'info',
+  }).then(() => {
+    // 发布文章逻辑
+    changeArticleStatus(row.id,{status:1}).then(res => {
+      ElMessage.success('发布成功')
+      // 刷新列表
+      handleSearch()
+    })
+  })
 }
+const handleUnPublish = (row) => {
+  ElMessageBox.confirm(`确认下线文章${row.title}吗？`, '确认', {
+    confirmButtonText: '确定下线',
+    cancelButtonText: '取消',
+    type: 'warning',
+  }).then(() => {
+    // 下线文章逻辑
+    changeArticleStatus(row.id,{status:2}).then(res => {
+      ElMessage.success('下线成功')
+      // 刷新列表
+      handleSearch()
+    })
+  })
+}
+//删除文章
+const handleDelete = (row) => {
+  ElMessageBox.confirm(`确认删除文章${row.title}吗？`, '确认', {
+    confirmButtonText: '确定删除',
+    cancelButtonText: '取消',
+    type: 'danger',
+  }).then(() => {
+    // 删除文章逻辑
+    deleteArticle(row.id).then(res => {
+      ElMessage.success('删除成功')
+      // 刷新列表
+      handleSearch()
+    })
+  })
+}
+//下线文章
+
 </script>

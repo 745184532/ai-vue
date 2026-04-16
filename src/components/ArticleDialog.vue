@@ -64,7 +64,7 @@
 <script setup>
 import { ref,computed,reactive,nextTick ,watch} from 'vue'
 import { ElMessage } from 'element-plus'
-import { uploadFile ,createArticle } from '@/api/admin.js'
+import { uploadFile ,createArticle ,updateArticle } from '@/api/admin.js'
 import { fileBaseUrl } from '@/config/index.js'
 import RichTextEditor from '@/components/RichTextEditor.vue'
 
@@ -213,10 +213,19 @@ const handleSubmit = () =>{
             tags: formData.tagArray.join(','),
         }
         delete submitData.tagArray
-        createArticle(submitData).then(res =>{
+        if (!isEdit.value){
+            submitData.id = businessId.value
+            createArticle(submitData).then(res =>{
             loading.value = false
             emit('success')
-        })
+            })
+        }else{
+            updateArticle(props.article.id,submitData).then(res =>{
+            loading.value = false
+            emit('success')
+            })
+        }
+        
      })
 }
 </script>

@@ -34,7 +34,7 @@ service.interceptors.response.use(
         } else {
             //超时
             if(data.code === '-1'){
-                if(!Login.url?.includes('/login')){
+                if(!config.url?.includes('/login')){
                     ElMessage.error(data.msg || '登录过期，请重新登录')
                 //清楚登录信息
                 localStorage.removeItem('token')

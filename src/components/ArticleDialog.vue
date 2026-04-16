@@ -40,11 +40,36 @@
                     </div>
                 </div>
             </el-form-item>
+            <el-form-item label="文章内容" prop="content">
+                <RichTextEditor v-model="formData.content" 
+                placeholder="请输入文章内容"
+                :maxlength="5000"
+                @change="handleContentChange"
+                @created="handleEditorCreated"
+                min-height="400px"
+                />
+            </el-form-item>
         </el-form>
+        <div v-if="btnPreview">
+            <h2>内容预览</h2>
+            <div v-html="formData.content"></div>
+        </div>
+        <template #footer>
+            <el-button v-if="!btnPreview" type="primary" @click="handleSubmit" >{{ btnPreview ? '隐藏预览' : '预览效果' }}</el-button>
+            <el-button type="primary" @click="handleClose">取消</el-button>
+            <el-button type="danger" @click="handleSubmit" :loading="loading">创建文章</el-button>
+        </template>
     </el-dialog>
 </template>
 <script setup>
-import { ref,computed,reactive } from 'vue'
+import { ref,computed,reactive,nextTick } from 'vue'
+import { ElMessage } from 'element-plus'
+import { uploadFile ,createArticle } from '@/api/admin.js'
+import { fileBaseUrl } from '@/config/index.js'
+import RichTextEditor from '@/components/RichTextEditor.vue'
+
+const emit = defineEmits(['update:modelValue','success'])
+
 const props = defineProps({
     modelValue: {
         type: Boolean,
@@ -57,10 +82,7 @@ const props = defineProps({
 })
 //由于modelValue，是从父组件传入进来的，正常不能再子组件里面prop直接修改，要解决这个问题，采用在子组件里面再定义计算属性，然后对父组件的状态进行监听，
 //当状态发生变化的时候，再去修改它
-const emit = defineEmits(['update:modelValue'])
-import { ElMessage } from 'element-plus'
-import { uploadFile } from '@/api/admin.js'
-import { fileBaseUrl } from '@/config/index.js'
+
 
 const dialogVisible = computed({
     get() {
@@ -89,6 +111,10 @@ const rules = reactive({
     ],
     categoryId: [
         { required: true, message: '请选择分类', trigger: 'change' },
+    ],
+    content: [
+        { required: true, message: '请输入文章内容', trigger: 'blur' },
+        { max: 5000, message: '文章内容必须5000个字符之间', trigger: 'blur' },
     ],
 })
 const commonTags =[
@@ -127,7 +153,42 @@ const handleRemove = () =>{
     imgUrl.value = ''
     formData.coverImage = ''
 }
-
+//富文本
+const handleContentChange =(data) =>{
+    formData.content = data.html
+}
+const editorInstance = ref(null)
+const handleEditorCreated = (editor) =>{
+    editorInstance.value = editor
+    //编辑得情况
+    if (formData.content && editor){
+        nextTick(() => {
+            editor.setHtml(formData.content) //富文本是异步得，要等它初始化完成，才能设置内容
+        })
+    }
+}
+//预览效果
+const btnPreview = ref(false)
+//提交
+const loading = ref(false)
+const formRef = ref()
+const handleSubmit = () =>{
+     formRef.value.validate((valid,fields) =>{
+        if (valid) {
+            loading.value = true
+        }
+        const submitData ={
+            //对象属性合并
+            ...formData,
+            tags: formData.tagArray.join(','),
+        }
+        delete submitData.tagArray
+        createArticle(submitData).then(res =>{
+            loading.value = false
+            emit('success')
+        })
+     })
+}
 </script>
 <style scoped lang="scss">
 .caover-preview {

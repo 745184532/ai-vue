@@ -44,3 +44,12 @@ export function changeArticleStatus(id, data){
 export function deleteArticle(id){
     return service.delete(`/knowledge/article/${id}`)
 }
+
+//咨询记录
+export function getConsultationPage(params){
+    return service.get('/psychological-chat/sessions',{params})
+}
+
+export function getConsultationDetail(sessionId){
+    return service.get(`/psychological-chat/sessions/${sessionId}/messages`)
+}

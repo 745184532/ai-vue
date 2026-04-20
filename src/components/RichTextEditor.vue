@@ -361,9 +361,9 @@ onBeforeUnmount(() => {
 }
 
 /* 确保字体样式正确应用 - 简化版本 */
-:deep(.w-e-text-container [data-slate-editor] *) {
+/* :deep(.w-e-text-container [data-slate-editor] *) { */
   /* 不设置任何强制字体，让编辑器处理 */
-}
+/* } */
 
 /* 颜色面板样式优化 */
 :deep(.w-e-color-panel) {

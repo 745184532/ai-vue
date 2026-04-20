@@ -61,3 +61,7 @@ export function getEmotionalScore(params){
 export function deleteEmotional(id){
     return service.delete(`/emotion-diary/admin/${id}`)
 }
+//获取数据分析
+export function getAnalyticsOverview(){
+    return service.get('/data-analytics/overview')
+}

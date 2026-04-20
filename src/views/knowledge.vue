@@ -69,9 +69,7 @@ const pagination = reactive({
 
 // 这个是为了回调的, 当用户点击搜索按钮时, 会调用这个函数
 // 并将用户输入的搜索条件作为参数传递给这个函数
-const handleSearch = async (formData) => {
-    console.log(formData,'查询参数')
-    
+const handleSearch = async (formData) => {    
     const params = {
       ...pagination,
       ...formData,

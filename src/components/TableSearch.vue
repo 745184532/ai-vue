@@ -27,6 +27,7 @@ const props = defineProps({
     fromItem: {
         type: Array,
         default: () => ({})
+        // default: () => [({})]
     }
 })
 //这里要计算属性，是为了让栅格里面的字段能够自适应宽度

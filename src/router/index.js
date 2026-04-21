@@ -1,6 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import BackendLayout from '@/components/BackendLayout.vue'
 import AuthLayout from '@/components/AuthLayout.vue'
+import FrontendLayout from '@/components/FrontendLayout.vue'
+
+
+
 //路由的配置
 const backendRouter = [    
     {
@@ -63,9 +67,36 @@ const backendRouter = [
         ]
     }
 ]
+
+//前台路由配置
+const frontendRoutes=[
+    {
+        path:'/',
+        component:FrontendLayout,
+        children:[
+            {
+                path: '',
+                component: ()=> import('@/views/home.vue'),            
+            },
+            {
+                path: 'consultation',
+                component: ()=> import('@/views/consultation.vue'),                
+            },
+            {
+                path: 'emotion-diary',
+                component: ()=> import('@/views/emotionDiary.vue'),                
+            },
+            {
+                path: 'knowledge',
+                component: ()=> import('@/views/frontendKnowledge.vue'),                
+            }
+        ],
+    }
+]
+
 const router = createRouter({
     history:createWebHistory(),
-    routes:backendRouter
+    routes:[...backendRouter,...frontendRoutes]
 })
 
 //路由前置守卫

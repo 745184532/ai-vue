@@ -5,6 +5,7 @@ import AuthLayout from '@/components/AuthLayout.vue'
 const backendRouter = [    
     {
         path:'/back',
+        redirect:'/back/dashboard', //默认跳转到数据分析
         component: BackendLayout,
         children:[
             {
@@ -67,5 +68,31 @@ const router = createRouter({
     routes:backendRouter
 })
 
+//路由前置守卫
+router.beforeEach((to,from,next) => {
+    const token = localStorage.getItem('token')
+    //当前用户是否登录
+    if(token){
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'))
+        //如果是后台用户，
+        if(userInfo.userType == 2){
+            if(to.path.startsWith('/back')){
+                next()
+            }else{
+                next('/back/dashboard')
+            }
+        }else if(userInfo.userType == 1){
+
+        }
+        next()
+    }else{
+        if(to.path.startsWith('/back')){
+            //如果是访问后台页面，那么跳转到登录页
+            next('/auth/login')
+        }else{
+            next()
+        }
+    }
+})
 
 export default router

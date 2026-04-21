@@ -65,3 +65,7 @@ export function deleteEmotional(id){
 export function getAnalyticsOverview(){
     return service.get('/data-analytics/overview')
 }
+//登出接口
+export function logout(){
+    return service.post('/user/logout')
+}

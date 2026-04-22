@@ -113,7 +113,12 @@ router.beforeEach((to,from,next) => {
                 next('/back/dashboard')
             }
         }else if(userInfo.userType == 1){
-
+            //用户端，只能访问前端路由
+            if(to.path.startsWith('/back') || to.path === '/auth'){
+                next('/')
+            }else{
+                next()
+            }
         }
         next()
     }else{

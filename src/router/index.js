@@ -120,7 +120,6 @@ router.beforeEach((to,from,next) => {
                 next()
             }
         }
-        next()
     }else{
         if(to.path.startsWith('/back')){
             //如果是访问后台页面，那么跳转到登录页

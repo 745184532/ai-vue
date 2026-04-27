@@ -73,7 +73,7 @@
             <!-- 聊天消息区域 -->
             <div class="chat-messages">
                     <!-- 欢迎消息 -->
-                <div class="message-item ai-message" v-if="message.length===0">
+                <div class="message-item ai-message" v-if="messages.length===0">
                     <div class="message-avatar">
                         <el-image :src="iconUrl" style="width: 18px; height: 18px;"/>
                     </div>
@@ -85,10 +85,10 @@
                     </div>
                 </div>
                 <!-- 消息列表 -->
-                 <div  v-for=" masg in message" :key="masg.id" :class="msg.senderType ===1 ? 'user-message' : 'ai-message'">
+                 <div  v-for="msg in messages" :key="msg.id" class="message-item" :class="msg.senderType ===1 ? 'user-message' : 'ai-message'">
                     <div class="message-avatar">
-                        <el-image v-if="masg.senderType === 1" :src="iconUrl2" style="width: 18px; height: 18px;"/>
-                        <el-image v-if="masg.senderType === 2" :src="iconUrl" style="width: 18px; height: 18px;"/>
+                        <el-image v-if="msg.senderType === 1" :src="iconUrl2" style="width: 18px; height: 18px;"/>
+                        <el-image v-if="msg.senderType === 2" :src="iconUrl" style="width: 18px; height: 18px;"/>
                     </div>
                     <div class="message-content">
                         <div class="message-bubble">
@@ -120,10 +120,13 @@
                     :disabled="isAiTying"
                     @keydown="handleKeyDown"
                     class="message-input"
-                    clearable>
-                    </el-input>
+                    clearable />
+                    <div class="input-footer">
+                        <span>按Enter发送，Shift+Enter换行</span>
+                        <span>{{ userMessage.length }}/500</span>
+                    </div>
                 </div>
-                <el-button type="primary" class="send-btn"  @click="sendMessage">
+                <el-button :disabled="!userMessage.trim() || userMessage.length > 500" type="primary" class="send-btn"  @click="sendMessage">
                     <el-icon>
                         <Promotion />
                     </el-icon>
@@ -139,6 +142,7 @@ import { ref, onMounted } from 'vue' // 记得导入 ref
 import { startSession, getSessionList, deleteSession, getSessionDetail } from '@/api/frontend'
 import { ElMessage } from 'element-plus'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
+import { fetchEventSource } from '@microsoft/fetch-event-source'
 
 const iconUrl = new URL('@/assets/images/robot-fill.png', import.meta.url).href
 const iconUrl1 = new URL('@/assets/images/like.png', import.meta.url).href
@@ -159,7 +163,7 @@ const createNewFrontendSession = () => {
 }
 
 //定义对话消息
-const message = ref([])
+const messages = ref([])
 //定义用户消息
 const userMessage = ref('')
 //定义AI是否正在回复
@@ -183,8 +187,17 @@ const sendMessage =() =>{
     //如果没有会话或者是临时会话，要创建一个新会话
     if(currentSession.value.status === 'TEMP'){
         startNewSession(message)
+    }else{
+        //继续现有会话
+        messages.value.push({
+            id: Date.now(),
+            senderType: 1 ,
+            content: message,
+            createdAt: new Date().toISOString(),
+        })
+        startAIResponse(currentSession.value.sessionId, message)
     }
-    isAiTying.value = true
+    // isAiTying.value = true
     
 }
 const startNewSession = (message) => {
@@ -216,8 +229,91 @@ const startNewSession = (message) => {
         }
         //更新会话列表
         getSessionPage()
+        //添加初始用户消息
+        messages.value.push({
+            id: Date.now(),
+            senderType: 1 ,
+            content: message,
+            createdAt: new Date().toISOString(),
+        })
+        //开始流式对话
+        startAIResponse(currentSession.value.sessionId,message)
     })
 }
+const startAIResponse= (sessionId,userMessage) =>{
+    //防止重复发送
+    if(isAiTying.value){
+        ElMessage.error('AI助手正在输入中，请稍后')
+        return
+    }    
+    isAiTying.value = true
+
+    const aiMessage ={
+        id:`ai_${Date.now()}_${Math.random().toString(36).substr(2,9)}`,
+        senderType: 2 ,
+        content:'',
+        createdAt: new Date().toISOString(),
+    }
+    messages.value.push(aiMessage)
+    //调用后台接口
+    const ctrl = new AbortController() //用来中止fetch请求，
+    fetchEventSource('/api/psychological-chat/stream',{
+        method: 'POST',
+        headers:{
+            'Content-Type': 'application/json',
+            'Token': localStorage.getItem('token'),
+            'Accept': 'text/event-stream'            
+        },
+        body: JSON.stringify({
+            sessionId,
+            userMessage 
+        }),
+        signal: ctrl.signal, // 用来中止fetch请求，
+        onopen: (response) => {
+            console.log('连接成功')
+            if(response.headers.get('Content-Type') !== 'text/event-stream'){
+                ElMessage.error('服务器返回非流式数据')                
+            }
+        },
+        onmessage: (event) => {
+            const raw = event.data.trim()
+            if(!raw) return
+            const eventName= event.event
+            //当前会话的AI消息
+            const aiMessage = messages.value[messages.value.length -1]
+            if (eventName === 'done'){
+                isAiTying.value = false
+                ctrl.abort()
+                return
+            }
+            const payload = JSON.parse(raw)
+            const ok =String(payload.code) === '200'
+            if(ok && payload.data && payload.data.content){
+                aiMessage.content += payload.data.content
+            }else if (!ok){
+                //错误回复提示
+                handleError(payload.message ||'AI回复失败') 
+            }
+        },
+        onerror: (err) =>{
+            handleError(err||'AI回复失败')
+            throw err
+        },
+        onclose: () =>{
+           //开始情绪分析
+        }
+    })
+}
+//错误处理函数
+const handleError = (error) =>{
+    const aiMessage = messages.value[messages.value.length -1]
+    if(aiMessage){
+        aiMessage.content = 'AI回复失败,请重试'
+    }
+    isAiTying.value = false
+    ElMessage.error('AI回复失败,请重试')
+}
+
 //获取会话列表
 const getSessionPage = () =>{
     getSessionList({
@@ -230,8 +326,15 @@ const getSessionPage = () =>{
 //点击会话,获取会话数据
 const handleSessionClick = (session) => {
     getSessionDetail(session.id).then(res => {
-        message.value = res
+        messages.value = res
     })
+    //更新当前会话数据
+    const sessionData ={
+        sessionId: "session_" + session.id,
+        status: 'ACTIVE',
+        sessionTitle: session.sessionTitle,
+    }
+    currentSession.value = sessionData
 }
 const handleDeleteSession = (sessionId) => {
     // 调用后台接口删除会话

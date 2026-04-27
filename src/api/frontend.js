@@ -20,3 +20,4 @@ export const deleteSession = (sessionId) =>{
 export const getSessionDetail = (sessionId) =>{
     return service.get(`/psychological-chat/sessions/${sessionId}/messages`)
 }
+//流式对话

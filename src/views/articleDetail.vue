@@ -1,12 +1,12 @@
 <template>
-    <div class="articleDetail-detail">
+    <div class="articleDetail-container">
         <div class="header-section">
             <div class="header-content">
                 <el-image :src="iconUrl" style="width: 60px; height: 60px; "></el-image>
                 <h1>知识文章详情</h1>
             </div>
         </div>
-        <div class="conten"> 
+        <div class="content"> 
             <div class="diary-card">
                 <p class="title">文章信息</p>
                 <div class="sub-title">
@@ -20,7 +20,7 @@
                 <div class="summary-content" v-if="articleDetail.summary">
                     <p>{{ articleDetail.summary }}</p>
                 </div>
-                <div :style="{ 'margin-top': '20px' }" class="flex-box">
+                <div :style="{ marginTop: '20px' }" class="flex-box">
                     <div class="item flex-box">
                         <el-icon><Avatar /></el-icon>
                         <span>{{ articleDetail.authorName }}</span>
@@ -36,7 +36,7 @@
                 <div class="content-wrapper" v-html="formatContent(articleDetail.content)"></div>
                 <div class="tags-content" v-if="articleDetail.tagArray && articleDetail.tagArray.length">
                     <h4 class="tags-title">相关标签</h4>
-                    <div class="tags-lst">
+                    <div class="tags-list">
                         <el-tag v-for="tag in articleDetail.tagArray" type="info" effect="light" :key="tag" class="tag-item">{{ tag }}</el-tag>
                     </div>                    
                 </div>
@@ -49,10 +49,6 @@
 import { ref,reactive,onMounted } from 'vue'
 import  {dayjs, ElMessage } from 'element-plus'
 import { getKnowledgeDetail } from '@/api/frontend'
-import { dayjs } from 'element-plus'
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
 
 const iconUrl = new URL('@/assets/images/book.png', import.meta.url).href
 
@@ -60,7 +56,7 @@ const props = defineProps({
     id: String
 })
 
-const articleDetail = reactive({})
+const articleDetail = ref({})
 
 const formatContent = (content) => {
   if (!content) return ''
@@ -74,8 +70,10 @@ const formatContent = (content) => {
   return formatted
 }
 onMounted(() => {
+    console.log(props)
     getKnowledgeDetail(props.id).then(res => {
-        articleDetail = res
+        // Object.assign(articleDetail, res)
+        articleDetail.value = res
     })
 })
 </script>

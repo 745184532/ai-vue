@@ -82,15 +82,20 @@ const pagination =reactive({
 
 const articleList=ref([])
 //获取列表数据
+console.log(getKnowledgeList())
+
 const getPageList =() =>{
     const params={
-        sortField: 'readCount',
+        sortField: 'publishedAt',
         sortDirection: 'desc',
         ...pagination,
     }
     getKnowledgeList(params).then(res =>{
-        pagination.total = res.total
         articleList.value = res.records
+        pagination.total = res.total        
+        console.log(pagination.total)
+        console.log(articleList.value)
+
     })
 }
 //获取封面图片

@@ -24,3 +24,15 @@ export const getSessionDetail = (sessionId) =>{
 export const getSessionEmotion = (sessionId) =>{
     return service.get(`/psychological-chat/session/${sessionId}/emotion`)
 }
+//情绪日志提交接口
+export const addEmotionDiary = (data) =>{
+    return service.post('/emotion-diary', data)
+}
+//知识库接口
+export const getKnowledgeList = (params) =>{
+    return service.get('/knowledge/article/page',{params})
+}
+//获取知识文章详情
+export const getKnowledgeDetail = (articleId) =>{
+    return service.get(`/knowledge/article/${articleId}`)
+}

@@ -129,6 +129,9 @@ onMounted(() =>{
 <style scoped lang="scss">
 .knowledge-container {
     background: linear-gradient(135deg, #fafbfc 0%, #f7f9fc 50%, #f2f6fa 100%);
+    min-height: calc(100vh - 121px);
+    display: flex;
+    flex-direction: column;
     .flex-box {
         display: flex;
         align-items: center;
@@ -151,6 +154,7 @@ onMounted(() =>{
         gap: 20px;
         margin: 0 auto;
         width: 1200px;
+        flex: 1;
         padding: 20px;
         .recommend-section {
             width: 280px;

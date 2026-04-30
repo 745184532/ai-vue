@@ -80,6 +80,9 @@ onMounted(() => {
 <style scoped lang="scss">
 .articleDetail-container {
     background: linear-gradient(135deg, #fafbfc 0%, #f7f9fc 50%, #f2f6fa 100%);
+    min-height: calc(100vh - 121px);
+    display: flex;
+    flex-direction: column;
     .flex-box {
         display: flex;
         align-items: center;
@@ -104,6 +107,7 @@ onMounted(() => {
         margin: 0 auto;
         width: 980px;
         padding: 20px;
+        flex: 1;
         .diary-card {
             margin-bottom: 20px;
             background: white;
